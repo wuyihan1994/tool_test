@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addRowButton = document.getElementById('add-row-button');
     const saveButton = document.getElementById('save-button');
     const copyCsvButton = document.getElementById('copy-csv-button');
+    const autoSortButton = document.getElementById('auto-sort-button');
     const tabs = document.querySelectorAll('.tab');
     
     // 创建通知容器
@@ -82,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     addRowButton.addEventListener('click', handleAddRow);
     saveButton.addEventListener('click', handleSaveFile);
     copyCsvButton.addEventListener('click', handleCopyCsv);
+    autoSortButton.addEventListener('click', handleAutoSort);
     
     // Tab切换事件监听器
     tabs.forEach(tab => {
@@ -441,6 +443,50 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(textArea);
     }
     
+    function handleAutoSort() {
+        const currentData = getCurrentTabData();
+        if (currentData.headers.length === 0) {
+            showNotification("没有数据可排序。", 3000, '#ff9800');
+            return;
+        }
+        
+        // 查找id列的索引
+        const idIndex = currentData.headers.indexOf('id');
+        if (idIndex === -1) {
+            showNotification("未找到id列，无法进行排序。", 3000, '#ff9800');
+            return;
+        }
+        
+        // 分离前两行（标题行、中文描述）和数据行（包括数据类型说明行）
+        const headerRows = currentData.allRows.slice(0, 2);
+        const dataRows = currentData.allRows.slice(2);
+        
+        if (dataRows.length === 0) {
+            showNotification("没有数据行可排序。", 3000, '#ff9800');
+            return;
+        }
+        
+        // 对数据行按id列排序（数值排序）
+        dataRows.sort((a, b) => {
+            const idA = parseInt(a[idIndex]) || 0;
+            const idB = parseInt(b[idIndex]) || 0;
+            return idA - idB;
+        });
+        
+        // 重新分配连续的id值
+        dataRows.forEach((row, index) => {
+            row[idIndex] = (index + 1).toString();
+        });
+        
+        // 合并回原数据
+        currentData.allRows = [...headerRows, ...dataRows];
+        
+        // 重新生成表格
+        generateTable();
+        
+        showNotification(`数据已按id列排序，共处理${dataRows.length}行数据。`, 2000);
+    }
+    
     function switchTab(tabName) {
         // 更新tab样式
         tabs.forEach(tab => {
@@ -698,12 +744,12 @@ document.addEventListener('DOMContentLoaded', () => {
         thead.appendChild(headerRow);
 
         // 计算当前页应该显示的行
-        const startIdx = 2; // 前两行是描述和类型，始终显示
-        const dataStartIdx = startIdx + (currentPage - 1) * rowsPerPage;
+        const headerRowsCount = 2; // 前两行是描述和类型，始终显示
+        const dataStartIdx = headerRowsCount + (currentPage - 1) * rowsPerPage;
         const dataEndIdx = Math.min(dataStartIdx + rowsPerPage, currentData.allRows.length);
         
         // 添加描述和类型行（前两行）
-        for (let i = 0; i < startIdx && i < currentData.allRows.length; i++) {
+        for (let i = 0; i < headerRowsCount && i < currentData.allRows.length; i++) {
             const rowData = currentData.allRows[i];
             const row = document.createElement('tr');
             rowData.forEach((cellData, colIndex) => {
