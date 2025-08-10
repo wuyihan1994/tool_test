@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainFileInput = document.getElementById('main-file-input');
     const reactantsFileInput = document.getElementById('reactants-file-input');
     const effectsFileInput = document.getElementById('effects-file-input');
-    const attackEffectsFileInput = document.getElementById('attack-effects-file-input');
+    const attackEffectsFileInput = document.getElementById('unit-effects-file-input');
     const tableContainer = document.getElementById('table-container');
     const addRowButton = document.getElementById('add-row-button');
     const saveButton = document.getElementById('save-button');
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mainFileInput.addEventListener('change', (e) => handleFileLoad(e, 'main'));
     reactantsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'reactants'));
     effectsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'effects'));
-    attackEffectsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'attack_effects'));
+    attackEffectsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'unit_effects'));
     addRowButton.addEventListener('click', handleAddRow);
     saveButton.addEventListener('click', handleSaveFile);
     copyCsvButton.addEventListener('click', handleCopyCsv);
@@ -119,8 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (config.environment_effects_file) {
                 fileLoadPromises.push(loadFileFromPath(config.environment_effects_file, 'effects'));
             }
-            if (config.attack_effects_file) {
-                fileLoadPromises.push(loadFileFromPath(config.attack_effects_file, 'attack_effects'));
+            if (config.unit_effects_file) {
+                fileLoadPromises.push(loadFileFromPath(config.unit_effects_file, 'unit_effects'));
             }
             
             // 等待所有文件加载完成
@@ -211,12 +211,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (currentTab === 'reactions' && tableData.headers.length > 0) {
                     generateTable();
                 }
-            } else if (fileType === 'attack_effects') {
+            } else if (fileType === 'unit_effects') {
                 attackEffectsData = processData(parsed);
                 const nameIndex = parsed.headers.indexOf('name');
                 const nameZhIndex = parsed.headers.indexOf('name_zh');
-                if(nameIndex === -1) throw new Error('attack_effects.csv does not contain name column.');
-                if(nameZhIndex === -1) throw new Error('attack_effects.csv does not contain name_zh column.');
+                if(nameIndex === -1) throw new Error('unit_effects.csv does not contain name column.');
+                if(nameZhIndex === -1) throw new Error('unit_effects.csv does not contain name_zh column.');
                 attackEffectsOptions = parsed.allRows.slice(2).map(row => {
                     const name = row[nameIndex];
                     const nameZh = row[nameZhIndex];
@@ -228,8 +228,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     return null;
                 }).filter(Boolean);
                 console.log('Attack effects options loaded:', attackEffectsOptions);
-                showNotification(`Attack effects data loaded from ${filePath}: ${attackEffectsData.allRows.length - 2} rows`);
-                if (currentTab === 'attack_effects') {
+                showNotification(`Unit effects data loaded from ${filePath}: ${attackEffectsData.allRows.length - 2} rows`);
+                if (currentTab === 'unit_effects') {
                     generateTable();
                 } else if (currentTab === 'reactants' && reactantsData.headers.length > 0) {
                     generateTable();
@@ -310,12 +310,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.log('Regenerating table with new environment options');
                         generateTable(); // Re-render table if main data exists
                     }
-                } else if (fileType === 'attack_effects') {
+                } else if (fileType === 'unit_effects') {
                     attackEffectsData = processData(parsed);
                     const nameIndex = parsed.headers.indexOf('name');
                     const nameZhIndex = parsed.headers.indexOf('name_zh');
-                    if(nameIndex === -1) throw new Error('attack_effects.csv does not contain name column.');
-                    if(nameZhIndex === -1) throw new Error('attack_effects.csv does not contain name_zh column.');
+                    if(nameIndex === -1) throw new Error('unit_effects.csv does not contain name column.');
+                    if(nameZhIndex === -1) throw new Error('unit_effects.csv does not contain name_zh column.');
                     attackEffectsOptions = parsed.allRows.slice(2).map(row => {
                         const name = row[nameIndex];
                         const nameZh = row[nameZhIndex];
@@ -327,13 +327,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         return null;
                     }).filter(Boolean);
                     console.log('Attack effects options loaded:', attackEffectsOptions);
-                    showNotification(`Attack effects data loaded successfully: ${attackEffectsData.allRows.length - 2} rows`);
+                    showNotification(`Unit effects data loaded successfully: ${attackEffectsData.allRows.length - 2} rows`);
                     // 实时刷新对应的tab
-                    if (currentTab === 'attack_effects') {
-                        console.log('Regenerating attack_effects table');
+                    if (currentTab === 'unit_effects') {
+                        console.log('Regenerating unit_effects table');
                         generateTable();
                     } else if (currentTab === 'reactants' && reactantsData.headers.length > 0) {
-                        console.log('Regenerating table with new attack effects options');
+                        console.log('Regenerating table with new unit effects options');
                         generateTable(); // Re-render table if reactants data exists
                     }
                 }
@@ -465,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'reactions': '新增反应',
             'reactants': '新增反应物',
             'environment_effects': '新增环境影响',
-            'attack_effects': '新增攻击效果'
+            'unit_effects': '新增单位效果'
         };
         
         if (addRowButton) {
@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return reactantsData;
             case 'environment_effects':
                 return environmentEffectsData;
-            case 'attack_effects':
+            case 'unit_effects':
                 return attackEffectsData;
             default:
                 return tableData;
@@ -678,8 +678,8 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'environment_effects':
                 table.className = 'environment-effects-table';
                 break;
-            case 'attack_effects':
-                table.className = 'attack-effects-table';
+            case 'unit_effects':
+                table.className = 'unit-effects-table';
                 break;
         }
         
@@ -739,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     options = [...environmentOptions]; // 创建副本避免引用问题
                     isChoicesInput = options.length > 0; // 只有当有选项时才启用
                     console.log(`Column ${header} has ${options.length} options, isChoicesInput=${isChoicesInput}`);
-                } else if (header === 'attack_effects') {
+                } else if (header === 'unit_effects') {
                     options = [...attackEffectsOptions]; // 创建副本避免引用问题
                     isChoicesInput = options.length > 0; // 只有当有选项时才启用
                     console.log(`Column ${header} has ${options.length} options, isChoicesInput=${isChoicesInput}`);

@@ -1,4 +1,4 @@
-id,name,name_zh,chemical_formula,attack_effects,base_effect_values
+id,name,name_zh,chemical_formula,unit_effects,base_effect_values
 主键,名称,中文名称,化学式,攻击效果,基础效果数值
 int,String,String,String,String,String
 1,,氢气,H₂,Physical Attack|Repel,1|1

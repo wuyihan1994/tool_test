@@ -2,5 +2,5 @@
     "reactions_file": "reactions.csv",
     "reactants_file": "reactants.csv",
     "environment_effects_file": "environment_effects.csv",
-    "attack_effects_file": "attack_effects.csv"
+    "unit_effects_file": "unit_effects.csv"
 }
