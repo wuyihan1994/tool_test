@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableContainer = document.getElementById('table-container');
     const addRowButton = document.getElementById('add-row-button');
     const saveButton = document.getElementById('save-button');
+    const copyCsvButton = document.getElementById('copy-csv-button');
     const tabs = document.querySelectorAll('.tab');
     
     // 创建通知容器
@@ -80,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     attackEffectsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'attack_effects'));
     addRowButton.addEventListener('click', handleAddRow);
     saveButton.addEventListener('click', handleSaveFile);
+    copyCsvButton.addEventListener('click', handleCopyCsv);
     
     // Tab切换事件监听器
     tabs.forEach(tab => {
@@ -224,6 +226,57 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         showNotification("文件已保存", 2000);
+    }
+    
+    function handleCopyCsv() {
+        const currentData = getCurrentTabData();
+        if (currentData.headers.length === 0) {
+            showNotification("没有数据可复制。", 3000, '#ff9800');
+            return;
+        }
+        
+        const csvContent = convertDataToCSV(currentData);
+        
+        // 使用现代的Clipboard API
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(csvContent).then(() => {
+                showNotification("CSV文本已复制到剪贴板", 2000);
+            }).catch(err => {
+                console.error('复制失败:', err);
+                fallbackCopyTextToClipboard(csvContent);
+            });
+        } else {
+            // 降级方案
+            fallbackCopyTextToClipboard(csvContent);
+        }
+    }
+    
+    function fallbackCopyTextToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        
+        // 避免滚动到底部
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showNotification("CSV文本已复制到剪贴板", 2000);
+            } else {
+                showNotification("复制失败，请手动复制", 3000, '#ff9800');
+            }
+        } catch (err) {
+            console.error('降级复制方案失败:', err);
+            showNotification("复制失败，请手动复制", 3000, '#ff9800');
+        }
+        
+        document.body.removeChild(textArea);
     }
     
     function switchTab(tabName) {
