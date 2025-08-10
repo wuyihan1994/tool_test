@@ -10,7 +10,16 @@
     <link rel="stylesheet" href="choices.min.css"/>
     <style>
         body { font-family: sans-serif; margin: 20px; }
-        .top-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h1 { margin: 0; }
+        .top-buttons { display: flex; gap: 10px; }
+        .tab-container { margin-bottom: 20px; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 10px; border-bottom: 2px solid #ddd; }
+        .tab { padding: 10px 20px; background-color: #f8f8f8; border: 1px solid #ddd; border-bottom: none; cursor: pointer; border-radius: 5px 5px 0 0; }
+        .tab.active { background-color: white; border-bottom: 2px solid white; margin-bottom: -2px; }
+        .tab:hover { background-color: #e8e8e8; }
+        .tab.active:hover { background-color: white; }
+        .control-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
         .button-group { display: flex; gap: 10px; }
         .button-style {
             padding: 5px 10px;
@@ -35,28 +44,40 @@
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; word-wrap: break-word; vertical-align: top; }
         th { background-color: #f2f2f2; font-weight: bold; }
         /* 表格列宽度设置 */
-        #table-container table th:first-child, #table-container table td:first-child { width: 30px !important; max-width: 30px !important; overflow: hidden; }
+        #table-container table th:first-child, #table-container table td:first-child { width: 50px !important; max-width: 50px !important; overflow: hidden; }
         #table-container table th:nth-child(2), #table-container table td:nth-child(2) { width: 30% !important; min-width: 250px !important; }
         td[contenteditable="true"] { background-color: #f9f9f9; }
         td[contenteditable="true"]:focus { background-color: #e8f0fe; outline: 2px solid #4d90fe; }
         /* 确保Choices.js样式正确应用 */
         .choices { margin-bottom: 0; }
-        .choices__inner { min-height: 30px; padding: 4px 7.5px; }
+        .choices__inner { min-height: 24px; padding: 2px 5px; line-height: 1.1; }
+        .choices__list--multiple .choices__item { margin-bottom: 1px; padding: 1px 4px; font-size: 11px; line-height: 1.1; }
+        /* 优化表格行高 */
+        #table-container table td { padding: 4px 6px; vertical-align: middle; }
+        #table-container table th { padding: 6px 8px; }
     </style>
 </head>
 <body>
-    <h1>可视化CSV文件处理工具</h1>
+    <div class="header">
+        <h1>可视化CSV文件处理工具</h1>
+        <div class="top-buttons">
+            <label for="main-file-input" class="button-style">读取reactions.csv</label>
+            <label for="reactants-file-input" class="button-style">读取reactants.csv</label>
+            <label for="effects-file-input" class="button-style">读取environment_effects.csv</label>
+        </div>
+    </div>
 
-    <div class="top-controls">
-        <div class="button-group">
-            <label for="main-file-input" class="button-style">读取Reactions.csv</label>
+    <div class="tab-container">
+        <div class="tabs">
+            <div class="tab active" data-tab="reactions">reactions</div>
+            <div class="tab" data-tab="reactants">reactants</div>
+            <div class="tab" data-tab="environment_effects">environment_effects</div>
         </div>
-        <div class="button-group">
-            <label for="reactants-file-input" class="button-style">读取Reactants.csv</label>
-            <label for="effects-file-input" class="button-style">读取Effects.csv</label>
-            <button id="add-row-button" class="button-style">新增反应</button>
-            <button id="save-button" class="button-style">保存文件</button>
-        </div>
+    </div>
+
+    <div class="control-buttons">
+        <button id="add-row-button" class="button-style">新增反应</button>
+        <button id="save-button" class="button-style">保存文件</button>
     </div>
     
     <input type="file" id="main-file-input" accept=".csv">

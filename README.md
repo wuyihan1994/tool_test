@@ -8,7 +8,12 @@
 页面主体部分是一个表格，表格的列名和reactions.csv文件保持一致。
 表格的宽度为屏幕宽度的90%。
 表格行数过多时进行分页展示，每一页20行。
-表格右上角有一个【新增反应】按钮。
+表格右上角有一个【新增】按钮。
+- 【新增】按钮在不同tab下应该有不同的名称和含义。
+- 【新增反应】在reactions tab下，新增的反应会在reactions.csv文件中新增一行数据。
+- 【新增反应物】在reactants tab下，新增的反应会在reactants.csv文件中新增一行数据。
+- 【新增环境影响】在environment_effects tab下，新增的反应会在environment_effects.csv文件中新增一行数据。
+
 
 ## 功能描述
 

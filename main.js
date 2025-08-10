@@ -1,11 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Central data stores
     let tableData = { headers: [], allRows: [] };
+    let reactantsData = { headers: [], allRows: [] };
+    let environmentEffectsData = { headers: [], allRows: [] };
     let reactantsOptions = [];
     let environmentOptions = [];
     let choiceInstances = []; // To keep track of Choices.js instances
     let currentPage = 1;
     const rowsPerPage = 20; // 每页显示20行
+    let currentTab = 'reactions'; // 当前激活的tab
 
     // DOM Element references
     const mainFileInput = document.getElementById('main-file-input');
@@ -14,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableContainer = document.getElementById('table-container');
     const addRowButton = document.getElementById('add-row-button');
     const saveButton = document.getElementById('save-button');
+    const tabs = document.querySelectorAll('.tab');
     
     // 创建通知容器
     const notificationContainer = document.createElement('div');
@@ -72,6 +76,17 @@ document.addEventListener('DOMContentLoaded', () => {
     effectsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'effects'));
     addRowButton.addEventListener('click', handleAddRow);
     saveButton.addEventListener('click', handleSaveFile);
+    
+    // Tab切换事件监听器
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.getAttribute('data-tab');
+            switchTab(tabName);
+        });
+    });
+    
+    // 初始化按钮文本
+    updateAddButtonText(currentTab);
 
     function handleFileLoad(event, fileType) {
         const file = event.target.files[0];
@@ -84,27 +99,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (fileType === 'main') {
                     tableData = processData(parsed);
                     currentPage = 1; // 重置页码
-                    generateTable();
-                    showNotification(`Main data loaded successfully: ${tableData.allRows.length - 2} rows`);
+                    currentTab = 'reactions';
+                    switchTab('reactions');
+                    showNotification(`Reactions data loaded successfully: ${tableData.allRows.length - 2} rows`);
                 } else if (fileType === 'reactants') {
+                    reactantsData = processData(parsed);
                     const formulaIndex = parsed.headers.indexOf('chemical_formula');
                     if(formulaIndex === -1) throw new Error('reactants.csv does not contain chemical_formula column.');
                     reactantsOptions = parsed.allRows.slice(2).map(row => row[formulaIndex]).filter(Boolean);
                     console.log('Reactants options loaded:', reactantsOptions); // 添加日志
-                    // 替换alert为非阻断式消息提醒
-                    showNotification(`Reactants data loaded successfully: ${reactantsOptions.length} options`);
-                    if (tableData.headers.length > 0) {
+                    showNotification(`Reactants data loaded successfully: ${reactantsData.allRows.length - 2} rows`);
+                    if (currentTab === 'reactions' && tableData.headers.length > 0) {
                         console.log('Regenerating table with new reactants options');
                         generateTable(); // Re-render table if main data exists
                     }
                 } else if (fileType === 'effects') {
+                    environmentEffectsData = processData(parsed);
                     const nameIndex = parsed.headers.indexOf('name');
                     if(nameIndex === -1) throw new Error('environment_effects.csv does not contain name column.');
                     environmentOptions = parsed.allRows.slice(2).map(row => row[nameIndex]).filter(Boolean);
                     console.log('Environment options loaded:', environmentOptions); // 添加日志
-                    // 替换alert为非阻断式消息提醒
-                    showNotification(`Environment effects data loaded successfully: ${environmentOptions.length} options`);
-                    if (tableData.headers.length > 0) {
+                    showNotification(`Environment effects data loaded successfully: ${environmentEffectsData.allRows.length - 2} rows`);
+                    if (currentTab === 'reactions' && tableData.headers.length > 0) {
                         console.log('Regenerating table with new environment options');
                         generateTable(); // Re-render table if main data exists
                     }
@@ -120,39 +136,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleAddRow() {
-        if (tableData.headers.length === 0) {
-            showNotification("请先加载主反应文件 (Reactions.csv)。", 3000, '#ff9800');
+        const currentData = getCurrentTabData();
+        if (currentData.headers.length === 0) {
+            showNotification(`请先加载${currentTab}文件。`, 3000, '#ff9800');
             return;
         }
-        const idIndex = tableData.headers.indexOf('id');
+        const idIndex = currentData.headers.indexOf('id');
         let newId = 1;
-        const dataRows = tableData.allRows.slice(2);
+        const dataRows = currentData.allRows.slice(2);
         if (dataRows.length > 0) {
             const lastRow = dataRows[dataRows.length - 1];
             const lastId = parseInt(lastRow[idIndex], 10);
             if (!isNaN(lastId)) newId = lastId + 1;
         }
-        const newRow = Array(tableData.headers.length).fill('');
+        const newRow = Array(currentData.headers.length).fill('');
         if (idIndex !== -1) newRow[idIndex] = newId.toString();
-        tableData.allRows.push(newRow);
+        currentData.allRows.push(newRow);
         // 添加新行后，跳转到最后一页
-        const totalPages = Math.ceil((tableData.allRows.length - 2) / rowsPerPage);
+        const totalPages = Math.ceil((currentData.allRows.length - 2) / rowsPerPage);
         currentPage = totalPages;
         generateTable();
         showNotification("已添加新行", 2000);
     }
 
     function handleSaveFile() {
-        if (tableData.headers.length === 0) {
+        const currentData = getCurrentTabData();
+        if (currentData.headers.length === 0) {
             showNotification("没有数据可保存。", 3000, '#ff9800');
             return;
         }
-        const csvContent = convertDataToCSV();
+        const csvContent = convertDataToCSV(currentData);
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.setAttribute('href', url);
-        link.setAttribute('download', 'reactions-modified.csv');
+        link.setAttribute('download', `${currentTab}-modified.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -160,9 +178,54 @@ document.addEventListener('DOMContentLoaded', () => {
         showNotification("文件已保存", 2000);
     }
     
-    function convertDataToCSV() {
-        const headerString = tableData.headers.join(',');
-        const rowsString = tableData.allRows.map(row => row.join(',')).join('\n');
+    function switchTab(tabName) {
+        // 更新tab样式
+        tabs.forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.getAttribute('data-tab') === tabName) {
+                tab.classList.add('active');
+            }
+        });
+        
+        currentTab = tabName;
+        currentPage = 1; // 重置页码
+        
+        // 更新新增按钮的文本
+        updateAddButtonText(tabName);
+        
+        // 根据当前tab显示对应的数据
+        generateTable();
+    }
+    
+    function updateAddButtonText(tabName) {
+        const buttonTextMap = {
+            'reactions': '新增反应',
+            'reactants': '新增反应物',
+            'environment_effects': '新增环境影响'
+        };
+        
+        if (addRowButton) {
+            addRowButton.textContent = buttonTextMap[tabName] || '新增';
+        }
+    }
+    
+    function getCurrentTabData() {
+        switch (currentTab) {
+            case 'reactions':
+                return tableData;
+            case 'reactants':
+                return reactantsData;
+            case 'environment_effects':
+                return environmentEffectsData;
+            default:
+                return tableData;
+        }
+    }
+    
+    function convertDataToCSV(data = null) {
+        const currentData = data || getCurrentTabData();
+        const headerString = currentData.headers.join(',');
+        const rowsString = currentData.allRows.map(row => row.join(',')).join('\n');
         return `${headerString}\n${rowsString}`;
     }
 
@@ -231,7 +294,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 创建分页控件
     function createPagination() {
-        const totalRows = tableData.allRows.length - 2; // 减去前两行（描述和类型）
+        const currentData = getCurrentTabData();
+        const totalRows = currentData.allRows.length - 2; // 减去前两行（描述和类型）
         if (totalRows <= 0) return null;
         
         const totalPages = Math.ceil(totalRows / rowsPerPage);
@@ -329,7 +393,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         tableContainer.innerHTML = '';
-        if (tableData.headers.length === 0) return;
+        const currentData = getCurrentTabData();
+        if (currentData.headers.length === 0) return;
 
         const table = document.createElement('table');
         table.style.borderCollapse = 'collapse';
@@ -342,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tbody = document.createElement('tbody');
 
         const headerRow = document.createElement('tr');
-        tableData.headers.forEach((headerText, index) => {
+        currentData.headers.forEach((headerText, index) => {
             const th = document.createElement('th');
             th.textContent = headerText;
             
@@ -355,11 +420,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // 计算当前页应该显示的行
         const startIdx = 2; // 前两行是描述和类型，始终显示
         const dataStartIdx = startIdx + (currentPage - 1) * rowsPerPage;
-        const dataEndIdx = Math.min(dataStartIdx + rowsPerPage, tableData.allRows.length);
+        const dataEndIdx = Math.min(dataStartIdx + rowsPerPage, currentData.allRows.length);
         
         // 添加描述和类型行（前两行）
-        for (let i = 0; i < startIdx && i < tableData.allRows.length; i++) {
-            const rowData = tableData.allRows[i];
+        for (let i = 0; i < startIdx && i < currentData.allRows.length; i++) {
+            const rowData = currentData.allRows[i];
             const row = document.createElement('tr');
             rowData.forEach((cellData, colIndex) => {
                 const td = document.createElement('td');
@@ -374,11 +439,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 添加当前页的数据行
         for (let rowIndex = dataStartIdx; rowIndex < dataEndIdx; rowIndex++) {
-            const rowData = tableData.allRows[rowIndex];
+            const rowData = currentData.allRows[rowIndex];
             const row = document.createElement('tr');
             rowData.forEach((cellData, colIndex) => {
                 const td = document.createElement('td');
-                const header = tableData.headers[colIndex];
+                const header = currentData.headers[colIndex];
                 
                 // 列宽度由colgroup控制
 
@@ -423,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             removeItemButton: true,
                             searchEnabled: true,
                             placeholder: true,
-                            placeholderValue: `选择${header}...`,
+                            // placeholderValue: `选择${header}...`,
                             shouldSort: false
                         });
 
@@ -435,28 +500,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         choices.passedElement.element.addEventListener('change', (e) => {
-                            tableData.allRows[rowIndex][colIndex] = choices.getValue(true).join('|');
+                            currentData.allRows[rowIndex][colIndex] = choices.getValue(true).join('|');
                             
-                            // 规则8-6：修改reactants或products列时，实时解析并回填到reaction_equation列中
-                            const equationIndex = tableData.headers.indexOf('reaction_equation');
-                            const reactantsIndex = tableData.headers.indexOf('reactants');
-                            const productsIndex = tableData.headers.indexOf('products');
-                            
-                            if ((colIndex === reactantsIndex || colIndex === productsIndex) && 
-                                tableData.allRows[rowIndex][reactantsIndex] && 
-                                tableData.allRows[rowIndex][productsIndex]) {
+                            // 规则8-6：修改reactants或products列时，实时解析并回填到reaction_equation列中（仅对reactions tab有效）
+                            if (currentTab === 'reactions') {
+                                const equationIndex = currentData.headers.indexOf('reaction_equation');
+                                const reactantsIndex = currentData.headers.indexOf('reactants');
+                                const productsIndex = currentData.headers.indexOf('products');
                                 
-                                const reactants = tableData.allRows[rowIndex][reactantsIndex].split('|').filter(Boolean);
-                                const products = tableData.allRows[rowIndex][productsIndex].split('|').filter(Boolean);
-                                
-                                if (reactants.length > 0 && products.length > 0) {
-                                    const equation = `${reactants.join(' + ')} -> ${products.join(' + ')}`;
-                                    tableData.allRows[rowIndex][equationIndex] = equation;
+                                if ((colIndex === reactantsIndex || colIndex === productsIndex) && 
+                                    currentData.allRows[rowIndex][reactantsIndex] && 
+                                    currentData.allRows[rowIndex][productsIndex]) {
                                     
-                                    // 更新UI
-                                    const equationTd = row.cells[equationIndex];
-                                    if (equationTd.querySelector('[contenteditable]')) {
-                                        equationTd.querySelector('[contenteditable]').textContent = equation;
+                                    const reactants = currentData.allRows[rowIndex][reactantsIndex].split('|').filter(Boolean);
+                                    const products = currentData.allRows[rowIndex][productsIndex].split('|').filter(Boolean);
+                                    
+                                    if (reactants.length > 0 && products.length > 0) {
+                                        const equation = `${reactants.join(' + ')} -> ${products.join(' + ')}`;
+                                        currentData.allRows[rowIndex][equationIndex] = equation;
+                                        
+                                        // 更新UI
+                                        const equationTd = row.cells[equationIndex];
+                                        if (equationTd.querySelector('[contenteditable]')) {
+                                            equationTd.querySelector('[contenteditable]').textContent = equation;
+                                        }
                                     }
                                 }
                             }
@@ -470,8 +537,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         div.setAttribute('contenteditable', 'true');
                         div.addEventListener('input', (e) => {
                             const newValue = e.target.textContent;
-                            if (tableData.allRows[rowIndex]) {
-                                tableData.allRows[rowIndex][colIndex] = newValue;
+                            if (currentData.allRows[rowIndex]) {
+                                currentData.allRows[rowIndex][colIndex] = newValue;
                             }
                         });
                         td.appendChild(div);
@@ -482,71 +549,73 @@ document.addEventListener('DOMContentLoaded', () => {
                     div.setAttribute('contenteditable', 'true');
                     div.addEventListener('input', (e) => {
                         const newValue = e.target.textContent;
-                        if (tableData.allRows[rowIndex]) {
-                            tableData.allRows[rowIndex][colIndex] = newValue;
+                        if (currentData.allRows[rowIndex]) {
+                            currentData.allRows[rowIndex][colIndex] = newValue;
                             
-                            // 实现规则8-5和8-6：实时解析和回填
-                            const equationIndex = tableData.headers.indexOf('reaction_equation');
-                            const reactantsIndex = tableData.headers.indexOf('reactants');
-                            const productsIndex = tableData.headers.indexOf('products');
-                            
-                            // 规则8-5：修改反应方程式时，实时解析并回填到reactants和products列中
-                            if (colIndex === equationIndex && newValue && newValue.includes('->')) {
-                                const parts = newValue.split('->');
-                                const clean = (s) => s.trim().replace(/^\d+/, '').replace(/[↑↓]$/, '');
-                                const format = (str) => {
-                                    if (!str) return '';
-                                    return str.trim().split('+').map(clean).filter(Boolean).join('|');
-                                };
+                            // 实现规则8-5和8-6：实时解析和回填（仅对reactions tab有效）
+                            if (currentTab === 'reactions') {
+                                const equationIndex = currentData.headers.indexOf('reaction_equation');
+                                const reactantsIndex = currentData.headers.indexOf('reactants');
+                                const productsIndex = currentData.headers.indexOf('products');
                                 
-                                // 更新数据
-                                tableData.allRows[rowIndex][reactantsIndex] = format(parts[0]);
-                                tableData.allRows[rowIndex][productsIndex] = format(parts[1]);
-                                
-                                // 更新UI
-                                const reactantsTd = row.cells[reactantsIndex];
-                                const productsTd = row.cells[productsIndex];
-                                
-                                // 如果是Choices实例，需要更新Choices的值
-                                if (reactantsTd.querySelector('.choices')) {
-                                    const reactantsChoices = choiceInstances.find(c => 
-                                        c.passedElement.element.closest('td') === reactantsTd);
-                                    if (reactantsChoices) {
-                                        const values = tableData.allRows[rowIndex][reactantsIndex].split('|').filter(Boolean);
-                                        reactantsChoices.setValue(values);
-                                    }
-                                } else if (reactantsTd.querySelector('[contenteditable]')) {
-                                    reactantsTd.querySelector('[contenteditable]').textContent = tableData.allRows[rowIndex][reactantsIndex];
-                                }
-                                
-                                if (productsTd.querySelector('.choices')) {
-                                    const productsChoices = choiceInstances.find(c => 
-                                        c.passedElement.element.closest('td') === productsTd);
-                                    if (productsChoices) {
-                                        const values = tableData.allRows[rowIndex][productsIndex].split('|').filter(Boolean);
-                                        productsChoices.setValue(values);
-                                    }
-                                } else if (productsTd.querySelector('[contenteditable]')) {
-                                    productsTd.querySelector('[contenteditable]').textContent = tableData.allRows[rowIndex][productsIndex];
-                                }
-                            }
-                            
-                            // 规则8-6：修改reactants或products列时，实时解析并回填到reaction_equation列中
-                            if ((colIndex === reactantsIndex || colIndex === productsIndex) && 
-                                tableData.allRows[rowIndex][reactantsIndex] && 
-                                tableData.allRows[rowIndex][productsIndex]) {
-                                
-                                const reactants = tableData.allRows[rowIndex][reactantsIndex].split('|').filter(Boolean);
-                                const products = tableData.allRows[rowIndex][productsIndex].split('|').filter(Boolean);
-                                
-                                if (reactants.length > 0 && products.length > 0) {
-                                    const equation = `${reactants.join(' + ')} -> ${products.join(' + ')}`;
-                                    tableData.allRows[rowIndex][equationIndex] = equation;
+                                // 规则8-5：修改反应方程式时，实时解析并回填到reactants和products列中
+                                if (colIndex === equationIndex && newValue && newValue.includes('->')) {
+                                    const parts = newValue.split('->');
+                                    const clean = (s) => s.trim().replace(/^\d+/, '').replace(/[↑↓]$/, '');
+                                    const format = (str) => {
+                                        if (!str) return '';
+                                        return str.trim().split('+').map(clean).filter(Boolean).join('|');
+                                    };
                                     
+                                    // 更新数据
+                                    currentData.allRows[rowIndex][reactantsIndex] = format(parts[0]);
+                                    currentData.allRows[rowIndex][productsIndex] = format(parts[1]);
+                                
                                     // 更新UI
-                                    const equationTd = row.cells[equationIndex];
-                                    if (equationTd.querySelector('[contenteditable]')) {
-                                        equationTd.querySelector('[contenteditable]').textContent = equation;
+                                    const reactantsTd = row.cells[reactantsIndex];
+                                    const productsTd = row.cells[productsIndex];
+                                    
+                                    // 如果是Choices实例，需要更新Choices的值
+                                    if (reactantsTd.querySelector('.choices')) {
+                                        const reactantsChoices = choiceInstances.find(c => 
+                                            c.passedElement.element.closest('td') === reactantsTd);
+                                        if (reactantsChoices) {
+                                            const values = currentData.allRows[rowIndex][reactantsIndex].split('|').filter(Boolean);
+                                            reactantsChoices.setValue(values);
+                                        }
+                                    } else if (reactantsTd.querySelector('[contenteditable]')) {
+                                        reactantsTd.querySelector('[contenteditable]').textContent = currentData.allRows[rowIndex][reactantsIndex];
+                                    }
+                                    
+                                    if (productsTd.querySelector('.choices')) {
+                                        const productsChoices = choiceInstances.find(c => 
+                                            c.passedElement.element.closest('td') === productsTd);
+                                        if (productsChoices) {
+                                            const values = currentData.allRows[rowIndex][productsIndex].split('|').filter(Boolean);
+                                            productsChoices.setValue(values);
+                                        }
+                                    } else if (productsTd.querySelector('[contenteditable]')) {
+                                        productsTd.querySelector('[contenteditable]').textContent = currentData.allRows[rowIndex][productsIndex];
+                                    }
+                                }
+                                
+                                // 规则8-6：修改reactants或products列时，实时解析并回填到reaction_equation列中
+                                if ((colIndex === reactantsIndex || colIndex === productsIndex) && 
+                                    currentData.allRows[rowIndex][reactantsIndex] && 
+                                    currentData.allRows[rowIndex][productsIndex]) {
+                                    
+                                    const reactants = currentData.allRows[rowIndex][reactantsIndex].split('|').filter(Boolean);
+                                    const products = currentData.allRows[rowIndex][productsIndex].split('|').filter(Boolean);
+                                    
+                                    if (reactants.length > 0 && products.length > 0) {
+                                        const equation = `${reactants.join(' + ')} -> ${products.join(' + ')}`;
+                                        currentData.allRows[rowIndex][equationIndex] = equation;
+                                        
+                                        // 更新UI
+                                        const equationTd = row.cells[equationIndex];
+                                        if (equationTd.querySelector('[contenteditable]')) {
+                                            equationTd.querySelector('[contenteditable]').textContent = equation;
+                                        }
                                     }
                                 }
                             }
