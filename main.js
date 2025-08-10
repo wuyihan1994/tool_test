@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const notificationContainer = document.createElement('div');
     notificationContainer.id = 'notification-container';
     notificationContainer.style.position = 'fixed';
-    notificationContainer.style.top = '20px';
+    notificationContainer.style.top = '80px'; // 调整位置避免遮挡读取按钮
     notificationContainer.style.right = '20px';
     notificationContainer.style.zIndex = '1000';
     document.body.appendChild(notificationContainer);
@@ -93,6 +93,156 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 初始化按钮文本
     updateAddButtonText(currentTab);
+    
+    // 自动加载配置文件和CSV文件
+    async function loadConfigAndFiles() {
+        console.log('开始自动加载配置文件...');
+        try {
+            const response = await fetch('config.json');
+            if (!response.ok) {
+                console.log('config.json文件不存在或无法读取，跳过自动加载');
+                return;
+            }
+            
+            const config = await response.json();
+            console.log('配置文件加载成功:', config);
+            
+            // 按顺序加载文件
+            const fileLoadPromises = [];
+            
+            if (config.reactions_file) {
+                fileLoadPromises.push(loadFileFromPath(config.reactions_file, 'main'));
+            }
+            if (config.reactants_file) {
+                fileLoadPromises.push(loadFileFromPath(config.reactants_file, 'reactants'));
+            }
+            if (config.environment_effects_file) {
+                fileLoadPromises.push(loadFileFromPath(config.environment_effects_file, 'effects'));
+            }
+            if (config.attack_effects_file) {
+                fileLoadPromises.push(loadFileFromPath(config.attack_effects_file, 'attack_effects'));
+            }
+            
+            // 等待所有文件加载完成
+            await Promise.allSettled(fileLoadPromises);
+            
+        } catch (error) {
+            console.log('加载配置文件时出错:', error.message);
+        }
+    }
+    
+    // 从文件路径加载CSV文件
+    async function loadFileFromPath(filePath, fileType) {
+        console.log(`正在加载文件: ${filePath}, 类型: ${fileType}`);
+        try {
+            const response = await fetch(filePath);
+            console.log(`文件 ${filePath} 响应状态:`, response.status, response.ok);
+            if (!response.ok) {
+                console.log(`文件 ${filePath} 不存在或无法读取`);
+                return;
+            }
+            
+            const text = await response.text();
+            console.log(`文件 ${filePath} 内容长度:`, text.length);
+            const parsed = parseCSV(text);
+            console.log(`文件 ${filePath} 解析结果:`, parsed.headers.length, '列,', parsed.allRows.length, '行');
+            
+            // 使用现有的文件处理逻辑
+            processLoadedFile(parsed, fileType, filePath);
+            console.log(`文件 ${filePath} 处理完成`);
+            
+        } catch (error) {
+            console.log(`加载文件 ${filePath} 时出错:`, error.message);
+        }
+    }
+    
+    // 处理加载的文件数据
+    function processLoadedFile(parsed, fileType, filePath) {
+        try {
+            if (fileType === 'main') {
+                tableData = processData(parsed);
+                currentPage = 1;
+                currentTab = 'reactions';
+                switchTab('reactions');
+                showNotification(`Reactions data loaded from ${filePath}: ${tableData.allRows.length - 2} rows`);
+            } else if (fileType === 'reactants') {
+                reactantsData = processData(parsed);
+                const formulaIndex = parsed.headers.indexOf('chemical_formula');
+                const nameZhIndex = parsed.headers.indexOf('name_zh');
+                if(formulaIndex === -1) throw new Error('reactants.csv does not contain chemical_formula column.');
+                if(nameZhIndex === -1) throw new Error('reactants.csv does not contain name_zh column.');
+                reactantsOptions = parsed.allRows.slice(2).map(row => {
+                    const formula = row[formulaIndex];
+                    const nameZh = row[nameZhIndex];
+                    if (formula && nameZh) {
+                        return { value: formula, label: `${formula} (${nameZh})` };
+                    } else if (formula) {
+                        return { value: formula, label: formula };
+                    }
+                    return null;
+                }).filter(Boolean);
+                console.log('Reactants options loaded:', reactantsOptions);
+                showNotification(`Reactants data loaded from ${filePath}: ${reactantsData.allRows.length - 2} rows`);
+                if (currentTab === 'reactants') {
+                    generateTable();
+                } else if (currentTab === 'reactions' && tableData.headers.length > 0) {
+                    generateTable();
+                }
+            } else if (fileType === 'effects') {
+                environmentEffectsData = processData(parsed);
+                const nameIndex = parsed.headers.indexOf('name');
+                const nameZhIndex = parsed.headers.indexOf('name_zh');
+                if(nameIndex === -1) throw new Error('environment_effects.csv does not contain name column.');
+                if(nameZhIndex === -1) throw new Error('environment_effects.csv does not contain name_zh column.');
+                environmentOptions = parsed.allRows.slice(2).map(row => {
+                    const name = row[nameIndex];
+                    const nameZh = row[nameZhIndex];
+                    if (name && nameZh) {
+                        return { value: name, label: `${name} (${nameZh})` };
+                    } else if (name) {
+                        return { value: name, label: name };
+                    }
+                    return null;
+                }).filter(Boolean);
+                console.log('Environment options loaded:', environmentOptions);
+                showNotification(`Environment effects data loaded from ${filePath}: ${environmentEffectsData.allRows.length - 2} rows`);
+                if (currentTab === 'environment_effects') {
+                    generateTable();
+                } else if (currentTab === 'reactions' && tableData.headers.length > 0) {
+                    generateTable();
+                }
+            } else if (fileType === 'attack_effects') {
+                attackEffectsData = processData(parsed);
+                const nameIndex = parsed.headers.indexOf('name');
+                const nameZhIndex = parsed.headers.indexOf('name_zh');
+                if(nameIndex === -1) throw new Error('attack_effects.csv does not contain name column.');
+                if(nameZhIndex === -1) throw new Error('attack_effects.csv does not contain name_zh column.');
+                attackEffectsOptions = parsed.allRows.slice(2).map(row => {
+                    const name = row[nameIndex];
+                    const nameZh = row[nameZhIndex];
+                    if (name && nameZh) {
+                        return { value: name, label: `${name} (${nameZh})` };
+                    } else if (name) {
+                        return { value: name, label: name };
+                    }
+                    return null;
+                }).filter(Boolean);
+                console.log('Attack effects options loaded:', attackEffectsOptions);
+                showNotification(`Attack effects data loaded from ${filePath}: ${attackEffectsData.allRows.length - 2} rows`);
+                if (currentTab === 'attack_effects') {
+                    generateTable();
+                } else if (currentTab === 'reactants' && reactantsData.headers.length > 0) {
+                    generateTable();
+                }
+            }
+        } catch (error) {
+            console.error("Error processing file:", error);
+            showNotification(`Error: ${error.message}`, 5000, '#f44336');
+        }
+    }
+
+    // 启动时自动加载配置文件
+    loadConfigAndFiles();
 
     function handleFileLoad(event, fileType) {
         const file = event.target.files[0];
@@ -126,7 +276,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }).filter(Boolean);
                     console.log('Reactants options loaded:', reactantsOptions); // 添加日志
                     showNotification(`Reactants data loaded successfully: ${reactantsData.allRows.length - 2} rows`);
-                    if (currentTab === 'reactions' && tableData.headers.length > 0) {
+                    // 实时刷新对应的tab
+                    if (currentTab === 'reactants') {
+                        console.log('Regenerating reactants table');
+                        generateTable();
+                    } else if (currentTab === 'reactions' && tableData.headers.length > 0) {
                         console.log('Regenerating table with new reactants options');
                         generateTable(); // Re-render table if main data exists
                     }
@@ -148,7 +302,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }).filter(Boolean);
                     console.log('Environment options loaded:', environmentOptions); // 添加日志
                     showNotification(`Environment effects data loaded successfully: ${environmentEffectsData.allRows.length - 2} rows`);
-                    if (currentTab === 'reactions' && tableData.headers.length > 0) {
+                    // 实时刷新对应的tab
+                    if (currentTab === 'environment_effects') {
+                        console.log('Regenerating environment_effects table');
+                        generateTable();
+                    } else if (currentTab === 'reactions' && tableData.headers.length > 0) {
                         console.log('Regenerating table with new environment options');
                         generateTable(); // Re-render table if main data exists
                     }
@@ -170,7 +328,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }).filter(Boolean);
                     console.log('Attack effects options loaded:', attackEffectsOptions);
                     showNotification(`Attack effects data loaded successfully: ${attackEffectsData.allRows.length - 2} rows`);
-                    if (currentTab === 'reactants' && reactantsData.headers.length > 0) {
+                    // 实时刷新对应的tab
+                    if (currentTab === 'attack_effects') {
+                        console.log('Regenerating attack_effects table');
+                        generateTable();
+                    } else if (currentTab === 'reactants' && reactantsData.headers.length > 0) {
                         console.log('Regenerating table with new attack effects options');
                         generateTable(); // Re-render table if reactants data exists
                     }

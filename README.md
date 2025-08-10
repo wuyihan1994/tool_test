@@ -26,6 +26,7 @@
 1-3、读取目标csv文件后，将文件内容填入表格中。
 1-4、表格的列名和csv文件保持一致。
 1-5、表格列宽适应csv文件的内容。
+1-6、正确读取csv文件内容后，实时刷新对应的tab
 2、【“新增”按钮功能】
 2-1、点击【新增xx】按钮后，在表格最后一行下面新增一行空白行
 2-2、新增的空白行，自动填入id，id值为最后一行的id+1
@@ -36,6 +37,20 @@
 4、【复制csv文本】
 4-1、点击【复制csv文本】按钮后，将当前tab的表格中的数据以csv文本的形式复制到剪贴板中。
 4-2、复制的csv文本中，第一行是标题行，第二行是中文描述，第三行是数据类型说明，从第四行开始是数据行。
+5、【预置文件路径】
+5-1、在项目中新建一个config.json文件，用于存储预置的文件的绝对路径。
+5-2、config.json文件的格式如下：
+```json
+{
+    "reactions_file": "reactions.csv",
+    "reactants_file": "reactants.csv",
+    "environment_effects_file": "environment_effects.csv",
+    "attack_effects_file": "attack_effects.csv"
+}
+```
+5-3、启动main.html文件时，读取config.json文件中的有效文件路径，并自动加载表格。
+5-4、如果config.json文件中没有对应的文件路径，或者文件路径不存在，启动时不应该报错。
+5-5、保留从按钮点击读取文件的功能，点击按钮后，仍然可以选择本地文件进行读取。
 
 ### reactions tab
 
