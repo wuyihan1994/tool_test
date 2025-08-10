@@ -17,27 +17,48 @@
 
 ## 功能描述
 
-1、通过前端页面读取本地的reactions.csv文件，并以表格的形式展示出来。
-2、点击【读取reactions.csv】按钮后，弹出本地文件的选择框，可以从中选择目标csv文件
-3、读取目标csv文件后，将文件内容填入表格中。
-4、表格的列名和reactions.csv文件保持一致。
-5、表格列宽适应reactions.csv文件的内容。
-6、部分情况下，reactions.csv文件中某些数据行的reactants列和products列是没有内容，若这两列中没有内容的时候，从reaction_equation列中读取反应方程式，
+### tab公共功能
+
+1、【csv文件读取以及表格数据展示】
+1-1、通过前端页面读取本地的csv文件，并以表格的形式展示出来。
+1-2、点击【读取csv】按钮后，弹出本地文件的选择框，可以从中选择目标csv文件
+1-3、读取目标csv文件后，将文件内容填入表格中。
+1-4、表格的列名和csv文件保持一致。
+1-5、表格列宽适应csv文件的内容。
+2、【“新增”按钮功能】
+2-1、点击【新增xx】按钮后，在表格最后一行下面新增一行空白行
+2-2、新增的空白行，自动填入id，id值为最后一行的id+1
+3、【表格数据编辑】
+3-1、表格的每一行数据都可以手动编辑
+3-2、表格数据被编辑后，实时修改读取的csv文件的对应字段的数据，回写到对应的文件中。
+3-3、保存修改后的文件时，需要保留原始csv文件的前三行（标题行、中文描述、数据类型说明）
+
+
+
+
+### reactions tab
+
+1、部分情况下，reactions.csv文件中某些数据行的reactants列和products列是没有内容，若这两列中没有内容的时候，从reaction_equation列中读取反应方程式，
 并将箭头两边的反应物和生成物分别回填到reactants和products列中。
-6-1、回填规则：有多个reactants或products时，使用|进行分隔
-6-2、回填时不要带上reactants或products前面配平的数字以及后面的沉淀物或气体的箭头符号
-7、点击【新增反应】按钮后，在表格最后一行下面新增一行空白行
-7-1、新增的空白行，自动填入id，id值为最后一行的id+1
-8、【表格编辑】表格的每一行都可以手动编辑
-8-1、表格数据被编辑后，实时修改读取的csv文件的对应字段的数据，回写到对应的文件中。
-8-2、reactants或products列支持下拉框多选和输入框，选择的范围为reactants.csv文件中的chemical_formula字段。
-8-3、reaction_conditon或reaction_effect列支持下拉框多选和输入框，选择的范围为environment_effects.csv文件中的name字段。下拉框多选时，使用|符号进行分隔。
-8-4、保存修改后的文件时，需要保留原始csv文件的前三行（标题行、中文描述、数据类型说明）
-8-5、修改反应方程式时，实时解析并回填到reactants和products列中。
-8-6、修改reactants或products列时，实时解析并回填到reaction_equation列中。
-9、点击【读取reactants.csv】、【读取environment_effects.csv】按钮后，均会弹出本地文件的选择框，可以从中选择目标csv文件。下拉框多选时，使用|符号进行分隔。
-9-1、若点击【读取reactants.csv】按钮并正确选择文件后，读取文件内容到内存中。
-9-2、若点击【读取environment_effects.csv】按钮并正确选择文件后，读取文件内容到内存中。
+1-1、回填规则：有多个reactants或products时，使用|进行分隔
+1-2、回填时不要带上reactants或products前面配平的数字以及后面的沉淀物或气体的箭头符号
+2、【表格编辑】
+2-1、reactants或products列支持下拉框多选和输入框，选择的范围为reactants.csv文件中的chemical_formula字段。
+2-2、reaction_conditon或reaction_effect列支持下拉框多选和输入框，选择的范围为environment_effects.csv文件中的name字段。下拉框多选时，使用|符号进行分隔。
+2-3、修改反应方程式时，实时解析并回填到reactants和products列中。
+2-4、修改reactants或products列时，实时解析并回填到reaction_equation列中。
+
+### reactants tab
+
+1、【表格展示】
+1-1、除了id列外，其他列自适应宽度
+
+
+
+### environment_effects tab
+
+1、【表格展示】
+1-1、除了id列外，其他列自适应宽度
 
 ## 入口文件
 
