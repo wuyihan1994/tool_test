@@ -3,8 +3,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let tableData = { headers: [], allRows: [] };
     let reactantsData = { headers: [], allRows: [] };
     let environmentEffectsData = { headers: [], allRows: [] };
+    let attackEffectsData = { headers: [], allRows: [] };
     let reactantsOptions = [];
     let environmentOptions = [];
+    let attackEffectsOptions = [];
     let choiceInstances = []; // To keep track of Choices.js instances
     let currentPage = 1;
     const rowsPerPage = 20; // 每页显示20行
@@ -14,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainFileInput = document.getElementById('main-file-input');
     const reactantsFileInput = document.getElementById('reactants-file-input');
     const effectsFileInput = document.getElementById('effects-file-input');
+    const attackEffectsFileInput = document.getElementById('attack-effects-file-input');
     const tableContainer = document.getElementById('table-container');
     const addRowButton = document.getElementById('add-row-button');
     const saveButton = document.getElementById('save-button');
@@ -74,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mainFileInput.addEventListener('change', (e) => handleFileLoad(e, 'main'));
     reactantsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'reactants'));
     effectsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'effects'));
+    attackEffectsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'attack_effects'));
     addRowButton.addEventListener('click', handleAddRow);
     saveButton.addEventListener('click', handleSaveFile);
     
@@ -145,6 +149,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (currentTab === 'reactions' && tableData.headers.length > 0) {
                         console.log('Regenerating table with new environment options');
                         generateTable(); // Re-render table if main data exists
+                    }
+                } else if (fileType === 'attack_effects') {
+                    attackEffectsData = processData(parsed);
+                    const nameIndex = parsed.headers.indexOf('name');
+                    const nameZhIndex = parsed.headers.indexOf('name_zh');
+                    if(nameIndex === -1) throw new Error('attack_effects.csv does not contain name column.');
+                    if(nameZhIndex === -1) throw new Error('attack_effects.csv does not contain name_zh column.');
+                    attackEffectsOptions = parsed.allRows.slice(2).map(row => {
+                        const name = row[nameIndex];
+                        const nameZh = row[nameZhIndex];
+                        if (name && nameZh) {
+                            return { value: name, label: `${name} (${nameZh})` };
+                        } else if (name) {
+                            return { value: name, label: name };
+                        }
+                        return null;
+                    }).filter(Boolean);
+                    console.log('Attack effects options loaded:', attackEffectsOptions);
+                    showNotification(`Attack effects data loaded successfully: ${attackEffectsData.allRows.length - 2} rows`);
+                    if (currentTab === 'reactants' && reactantsData.headers.length > 0) {
+                        console.log('Regenerating table with new attack effects options');
+                        generateTable(); // Re-render table if reactants data exists
                     }
                 }
             } catch (error) {
@@ -223,7 +249,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const buttonTextMap = {
             'reactions': '新增反应',
             'reactants': '新增反应物',
-            'environment_effects': '新增环境影响'
+            'environment_effects': '新增环境影响',
+            'attack_effects': '新增攻击效果'
         };
         
         if (addRowButton) {
@@ -239,6 +266,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return reactantsData;
             case 'environment_effects':
                 return environmentEffectsData;
+            case 'attack_effects':
+                return attackEffectsData;
             default:
                 return tableData;
         }
@@ -395,6 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Generating table with options:', { 
             reactantsOptions: reactantsOptions.length, 
             environmentOptions: environmentOptions.length, 
+            attackEffectsOptions: attackEffectsOptions.length,
             choiceInstances: choiceInstances.length 
         });
 
@@ -432,6 +462,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'environment_effects':
                 table.className = 'environment-effects-table';
+                break;
+            case 'attack_effects':
+                table.className = 'attack-effects-table';
                 break;
         }
         
@@ -489,6 +522,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log(`Column ${header} has ${options.length} options, isChoicesInput=${isChoicesInput}`);
                 } else if (['reaction_conditon', 'reaction_effect'].includes(header)) {
                     options = [...environmentOptions]; // 创建副本避免引用问题
+                    isChoicesInput = options.length > 0; // 只有当有选项时才启用
+                    console.log(`Column ${header} has ${options.length} options, isChoicesInput=${isChoicesInput}`);
+                } else if (header === 'attack_effects') {
+                    options = [...attackEffectsOptions]; // 创建副本避免引用问题
                     isChoicesInput = options.length > 0; // 只有当有选项时才启用
                     console.log(`Column ${header} has ${options.length} options, isChoicesInput=${isChoicesInput}`);
                 }

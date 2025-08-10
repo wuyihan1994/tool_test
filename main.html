@@ -51,7 +51,8 @@
         #table-container table.reactions-table td:nth-child(2) { width: 30% !important; min-width: 250px !important; }
         /* reactants和environment_effects表格自适应布局 */
         #table-container table.reactants-table,
-        #table-container table.environment-effects-table { table-layout: auto; }
+        #table-container table.environment-effects-table,
+        #table-container table.attack-effects-table { table-layout: auto; }
         td[contenteditable="true"] { background-color: #f9f9f9; }
         td[contenteditable="true"]:focus { background-color: #e8f0fe; outline: 2px solid #4d90fe; }
         /* 确保Choices.js样式正确应用 */
@@ -70,6 +71,7 @@
             <label for="main-file-input" class="button-style">读取reactions.csv</label>
             <label for="reactants-file-input" class="button-style">读取reactants.csv</label>
             <label for="effects-file-input" class="button-style">读取environment_effects.csv</label>
+            <label for="attack-effects-file-input" class="button-style">读取attack_effects.csv</label>
         </div>
     </div>
 
@@ -78,6 +80,7 @@
             <div class="tab active" data-tab="reactions">reactions</div>
             <div class="tab" data-tab="reactants">reactants</div>
             <div class="tab" data-tab="environment_effects">environment_effects</div>
+            <div class="tab" data-tab="attack_effects">attack_effects</div>
         </div>
     </div>
 
@@ -89,6 +92,7 @@
     <input type="file" id="main-file-input" accept=".csv">
     <input type="file" id="reactants-file-input" accept=".csv">
     <input type="file" id="effects-file-input" accept=".csv">
+    <input type="file" id="attack-effects-file-input" accept=".csv">
 
     <div id="table-container"></div>
 
