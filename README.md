@@ -2,8 +2,8 @@
 
 ## 前端页面描述
 
-页面右上角有4个按钮，分别是【读取reactions.csv】、【读取reactants.csv】、【读取environment_effects.csv】、【读取attack_effects.csv】按钮
-按钮下方一行对应四个tab，分别是【reactions】、【reactants】、【environment_effects】、【attack_effects】
+页面右上角有4个按钮，分别是【读取reactions.csv】、【读取reactants.csv】、【读取environment_effects.csv】、【读取unit_effects.csv】按钮
+按钮下方一行对应四个tab，分别是【reactions】、【reactants】、【environment_effects】、【unit_effects】
 点击tab切换时，会切换到对应的表格中。
 页面主体部分是一个表格，表格的列名和reactions.csv文件保持一致。
 表格的宽度为屏幕宽度的90%。
@@ -45,7 +45,7 @@
     "reactions_file": "reactions.csv",
     "reactants_file": "reactants.csv",
     "environment_effects_file": "environment_effects.csv",
-    "attack_effects_file": "attack_effects.csv"
+    "unit_effects_file": "unit_effects.csv"
 }
 ```
 5-3、启动main.html文件时，读取config.json文件中的有效文件路径，并自动加载表格。
@@ -71,15 +71,15 @@
 1、【表格展示】
 1-1、除了id列外，其他列自适应宽度
 2、【表格编辑】
-2-1、attack_effects列支持下拉框多选和输入框，选择的范围为attack_effects.csv文件中的name字段。
-2-2、attack_effects列的下拉框中，除了显示name字段，还应该显示name_zh字段。
+2-1、unit_effects列支持下拉框多选和输入框，选择的范围为unit_effects.csv文件中的name字段。
+2-2、unit_effects列的下拉框中，除了显示name字段，还应该显示name_zh字段。
 
 ### environment_effects tab
 
 1、【表格展示】
 1-1、除了id列外，其他列自适应宽度
 
-### attack_effects tab
+### unit_effects tab
 
 1、【表格展示】
 1-1、除了id列外，其他列自适应宽度
@@ -123,7 +123,7 @@ CSV文件格式：
 ### 示例格式
 
 ```
-id,name,name_zh,chemical_formula,attack_effects,base_effect_values
+id,name,name_zh,chemical_formula,unit_effects,base_effect_values
 主键,名称,中文名称,化学式,攻击效果,基础效果数值
 int,String,String,String,String,String
 1,Hydrogen,氢气,H₂,Physical Attack|Repel,1|1
@@ -150,7 +150,7 @@ int,String,String,int,String
 1,high temperature,高温,1,对火系敌人造成1点全局范围伤害
 ```
 
-## attack_effects.csv文件相关信息
+## unit_effects.csv文件相关信息
 
 ### 文件格式
 
