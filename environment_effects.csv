@@ -1,0 +1,5 @@
+id,name,name_zh,base_effect_values,desc
+主键,名称,中文名称,基础效果数值,描述
+int,String,String,int,String
+1,high temperature,高温,1,对火系敌人造成1点全局范围伤害
+2,low temperature,低温,1,对火系敌人造成1点全局范围伤害

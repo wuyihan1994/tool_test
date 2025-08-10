@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可视化CSV文件处理工具</title>
+    <!-- Choices.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+    <!-- 本地备用CSS，当CDN加载失败时使用 -->
+    <link rel="stylesheet" href="choices.min.css"/>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .top-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .button-group { display: flex; gap: 10px; }
+        .button-style {
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            background-color: #f8f8f8;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .button-style:hover {
+            background-color: #e8e8e8;
+        }
+        
+        .pagination button.button-style {
+            min-width: 30px;
+            text-align: center;
+        }
+        input[type="file"] { display: none; }
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; word-wrap: break-word; vertical-align: top; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        /* 表格列宽度设置 */
+        #table-container table th:first-child, #table-container table td:first-child { width: 30px !important; max-width: 30px !important; overflow: hidden; }
+        #table-container table th:nth-child(2), #table-container table td:nth-child(2) { width: 30% !important; min-width: 250px !important; }
+        td[contenteditable="true"] { background-color: #f9f9f9; }
+        td[contenteditable="true"]:focus { background-color: #e8f0fe; outline: 2px solid #4d90fe; }
+        /* 确保Choices.js样式正确应用 */
+        .choices { margin-bottom: 0; }
+        .choices__inner { min-height: 30px; padding: 4px 7.5px; }
+    </style>
+</head>
+<body>
+    <h1>可视化CSV文件处理工具</h1>
+
+    <div class="top-controls">
+        <div class="button-group">
+            <label for="main-file-input" class="button-style">读取Reactions.csv</label>
+        </div>
+        <div class="button-group">
+            <label for="reactants-file-input" class="button-style">读取Reactants.csv</label>
+            <label for="effects-file-input" class="button-style">读取Effects.csv</label>
+            <button id="add-row-button" class="button-style">新增反应</button>
+            <button id="save-button" class="button-style">保存文件</button>
+        </div>
+    </div>
+    
+    <input type="file" id="main-file-input" accept=".csv">
+    <input type="file" id="reactants-file-input" accept=".csv">
+    <input type="file" id="effects-file-input" accept=".csv">
+
+    <div id="table-container"></div>
+
+    <!-- Choices.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <!-- 本地备用JS，当CDN加载失败时使用 -->
+    <script>
+        // 检查Choices是否已加载，如果没有，则加载本地文件
+        if (typeof Choices === 'undefined') {
+            console.log('Choices.js not loaded from CDN, trying local file');
+            document.write('<script src="choices.min.js"><\/script>');
+        }
+    </script>
+    <script src="main.js"></script>
+</body>
+</html>

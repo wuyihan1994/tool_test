@@ -1,0 +1,31 @@
+id,name,name_zh,chemical_formula,attack_effects,base_effect_values
+主键,名称,中文名称,化学式,攻击效果,基础效果数值
+int,String,String,String,String,String
+1,,氢气,H₂,Physical Attack|Repel,1|1
+2,,水,H₂O,Physical Attack|Slow,1|1
+3,,氢氟酸,HF,Chemical Attack,5
+4,,氢化锂,LiH,Physical Attack,1
+5,,氦气,He₂,Physical Attack|Repel,2|2
+6,,锂,Li,Physical Attack,3
+7,,氢氧化锂,LiOH,Chemical Attack,5
+8,,氧化锂,Li₂O,Physical Attack,1
+9,,铍,Be,Physical Attack,1
+10,,氧化铍,BeO,Physical Attack,1
+11,,氮化铍,Be₃N₂,Physical Attack,1
+12,,氢化铍,BeH₂,Physical Attack,1
+13,,氟化铍,BeF₂,Physical Attack,1
+14,,硼,B,Physical Attack,1
+15,,氧化硼,B₂O₃,Physical Attack,1
+16,,氟化硼,BF₃,Physical Attack,1
+17,,碳化硼,B₄C,Physical Attack,1
+18,,碳,C,Physical Attack,1
+19,,一氧化碳,CO,Chemical Attack,5
+20,,二氧化碳,CO₂,Chemical Attack|Repel,5|2
+21,,氮气,N₂,Physical Attack|Repel,2|2
+22,,氨,NH₃,Physical Attack|Chemical Attack|Repel,2|7|2
+23,,一氧化氮,NO,Physical Attack,1
+24,,氮化锂,Li₃N,Physical Attack,1
+25,,氮化硼,BN,Physical Attack,1
+26,,氧气,O₂,Physical Attack|Repel|Heal,2|2|4
+27,,氟气,F₂,Physical Attack,1
+28,,氖气,Ne₂,Physical Attack,1
