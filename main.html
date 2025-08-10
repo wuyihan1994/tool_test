@@ -40,12 +40,18 @@
             text-align: center;
         }
         input[type="file"] { display: none; }
-        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+        table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; word-wrap: break-word; vertical-align: top; }
         th { background-color: #f2f2f2; font-weight: bold; }
         /* 表格列宽度设置 */
         #table-container table th:first-child, #table-container table td:first-child { width: 50px !important; max-width: 50px !important; overflow: hidden; }
-        #table-container table th:nth-child(2), #table-container table td:nth-child(2) { width: 30% !important; min-width: 250px !important; }
+        /* reactions表格固定布局 */
+        #table-container table.reactions-table { table-layout: fixed; }
+        #table-container table.reactions-table th:nth-child(2), 
+        #table-container table.reactions-table td:nth-child(2) { width: 30% !important; min-width: 250px !important; }
+        /* reactants和environment_effects表格自适应布局 */
+        #table-container table.reactants-table,
+        #table-container table.environment-effects-table { table-layout: auto; }
         td[contenteditable="true"] { background-color: #f9f9f9; }
         td[contenteditable="true"]:focus { background-color: #e8f0fe; outline: 2px solid #4d90fe; }
         /* 确保Choices.js样式正确应用 */

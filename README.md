@@ -33,9 +33,6 @@
 3-2、表格数据被编辑后，实时修改读取的csv文件的对应字段的数据，回写到对应的文件中。
 3-3、保存修改后的文件时，需要保留原始csv文件的前三行（标题行、中文描述、数据类型说明）
 
-
-
-
 ### reactions tab
 
 1、部分情况下，reactions.csv文件中某些数据行的reactants列和products列是没有内容，若这两列中没有内容的时候，从reaction_equation列中读取反应方程式，
@@ -47,11 +44,15 @@
 2-2、reaction_conditon或reaction_effect列支持下拉框多选和输入框，选择的范围为environment_effects.csv文件中的name字段。下拉框多选时，使用|符号进行分隔。
 2-3、修改反应方程式时，实时解析并回填到reactants和products列中。
 2-4、修改reactants或products列时，实时解析并回填到reaction_equation列中。
+2-5、reactants或products列的下拉框中，除了显示chemical_formula字段，还应该显示name_zh字段。
+2-6、reaction_conditon和reaction_effect列的下拉框中，除了显示name字段，还应该显示name_zh字段。
 
 ### reactants tab
 
 1、【表格展示】
 1-1、除了id列外，其他列自适应宽度
+2、【表格编辑】
+2-1、reactants或products列支持下拉框多选和输入框，选择的范围为reactants.csv文件中的chemical_formula字段。
 
 
 

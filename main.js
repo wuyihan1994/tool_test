@@ -105,8 +105,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (fileType === 'reactants') {
                     reactantsData = processData(parsed);
                     const formulaIndex = parsed.headers.indexOf('chemical_formula');
+                    const nameZhIndex = parsed.headers.indexOf('name_zh');
                     if(formulaIndex === -1) throw new Error('reactants.csv does not contain chemical_formula column.');
-                    reactantsOptions = parsed.allRows.slice(2).map(row => row[formulaIndex]).filter(Boolean);
+                    if(nameZhIndex === -1) throw new Error('reactants.csv does not contain name_zh column.');
+                    reactantsOptions = parsed.allRows.slice(2).map(row => {
+                        const formula = row[formulaIndex];
+                        const nameZh = row[nameZhIndex];
+                        if (formula && nameZh) {
+                            return { value: formula, label: `${formula} (${nameZh})` };
+                        } else if (formula) {
+                            return { value: formula, label: formula };
+                        }
+                        return null;
+                    }).filter(Boolean);
                     console.log('Reactants options loaded:', reactantsOptions); // 添加日志
                     showNotification(`Reactants data loaded successfully: ${reactantsData.allRows.length - 2} rows`);
                     if (currentTab === 'reactions' && tableData.headers.length > 0) {
@@ -116,8 +127,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (fileType === 'effects') {
                     environmentEffectsData = processData(parsed);
                     const nameIndex = parsed.headers.indexOf('name');
+                    const nameZhIndex = parsed.headers.indexOf('name_zh');
                     if(nameIndex === -1) throw new Error('environment_effects.csv does not contain name column.');
-                    environmentOptions = parsed.allRows.slice(2).map(row => row[nameIndex]).filter(Boolean);
+                    if(nameZhIndex === -1) throw new Error('environment_effects.csv does not contain name_zh column.');
+                    environmentOptions = parsed.allRows.slice(2).map(row => {
+                        const name = row[nameIndex];
+                        const nameZh = row[nameZhIndex];
+                        if (name && nameZh) {
+                            return { value: name, label: `${name} (${nameZh})` };
+                        } else if (name) {
+                            return { value: name, label: name };
+                        }
+                        return null;
+                    }).filter(Boolean);
                     console.log('Environment options loaded:', environmentOptions); // 添加日志
                     showNotification(`Environment effects data loaded successfully: ${environmentEffectsData.allRows.length - 2} rows`);
                     if (currentTab === 'reactions' && tableData.headers.length > 0) {
@@ -400,8 +422,18 @@ document.addEventListener('DOMContentLoaded', () => {
         table.style.borderCollapse = 'collapse';
         table.style.width = '100%';
         
-        // 表格样式通过CSS控制
-        table.style.tableLayout = 'fixed';
+        // 根据当前tab添加对应的CSS类名
+        switch (currentTab) {
+            case 'reactions':
+                table.className = 'reactions-table';
+                break;
+            case 'reactants':
+                table.className = 'reactants-table';
+                break;
+            case 'environment_effects':
+                table.className = 'environment-effects-table';
+                break;
+        }
         
         const thead = document.createElement('thead');
         const tbody = document.createElement('tbody');
@@ -472,8 +504,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         // 添加选项元素
                         options.forEach(option => {
                             const optElement = document.createElement('option');
-                            optElement.value = option;
-                            optElement.textContent = option;
+                            if (typeof option === 'object' && option.value && option.label) {
+                                optElement.value = option.value;
+                                optElement.textContent = option.label;
+                            } else {
+                                optElement.value = option;
+                                optElement.textContent = option;
+                            }
                             input.appendChild(optElement);
                         });
 
