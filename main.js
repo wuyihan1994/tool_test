@@ -215,21 +215,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     generateTable();
                 }
             } else if (fileType === 'attack_types') {
-                attackEffectsData = processData(parsed);
-                const nameIndex = parsed.headers.indexOf('name');
-                const nameZhIndex = parsed.headers.indexOf('name_zh');
-                if(nameIndex === -1) throw new Error('attack_types.csv does not contain name column.');
-                if(nameZhIndex === -1) throw new Error('attack_types.csv does not contain name_zh column.');
-                attackEffectsOptions = parsed.allRows.slice(2).map(row => {
-                    const name = row[nameIndex];
-                    const nameZh = row[nameZhIndex];
-                    if (name && nameZh) {
-                        return { value: name, label: `${name} (${nameZh})` };
-                    } else if (name) {
-                        return { value: name, label: name };
-                    }
-                    return null;
-                }).filter(Boolean);
+                    attackEffectsData = processData(parsed);
+                    const enumIndex = parsed.headers.indexOf('enum');
+                    const nameIndex = parsed.headers.indexOf('name');
+                    const nameZhIndex = parsed.headers.indexOf('name_zh');
+                    if(enumIndex === -1) throw new Error('attack_types.csv does not contain enum column.');
+                    if(nameIndex === -1) throw new Error('attack_types.csv does not contain name column.');
+                    if(nameZhIndex === -1) throw new Error('attack_types.csv does not contain name_zh column.');
+                    attackEffectsOptions = parsed.allRows.slice(2).map(row => {
+                        const enumValue = row[enumIndex];
+                        const name = row[nameIndex];
+                        const nameZh = row[nameZhIndex];
+                        if (enumValue && name && nameZh) {
+                            return { value: enumValue, label: `${enumValue} - ${name}(${nameZh})` };
+                        } else if (name) {
+                            return { value: name, label: name };
+                        }
+                        return null;
+                    }).filter(Boolean);
                 console.log('Attack effects options loaded:', attackEffectsOptions);
                 showNotification(`Attack types data loaded from ${filePath}: ${attackEffectsData.allRows.length - 2} rows`);
                 if (currentTab === 'attack_types') {
@@ -315,15 +318,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else if (fileType === 'attack_types') {
                     attackEffectsData = processData(parsed);
+                    const enumIndex = parsed.headers.indexOf('enum');
                     const nameIndex = parsed.headers.indexOf('name');
                     const nameZhIndex = parsed.headers.indexOf('name_zh');
+                    if(enumIndex === -1) throw new Error('attack_types.csv does not contain enum column.');
                     if(nameIndex === -1) throw new Error('attack_types.csv does not contain name column.');
                     if(nameZhIndex === -1) throw new Error('attack_types.csv does not contain name_zh column.');
                     attackEffectsOptions = parsed.allRows.slice(2).map(row => {
+                        const enumValue = row[enumIndex];
                         const name = row[nameIndex];
                         const nameZh = row[nameZhIndex];
-                        if (name && nameZh) {
-                            return { value: name, label: `${name} (${nameZh})` };
+                        if (enumValue && name && nameZh) {
+                             return { value: enumValue, label: `${enumValue} - ${name}(${nameZh})` };
                         } else if (name) {
                             return { value: name, label: name };
                         }
@@ -786,10 +792,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     options = [...environmentOptions]; // 创建副本避免引用问题
                     isChoicesInput = options.length > 0; // 只有当有选项时才启用
                     console.log(`Column ${header} has ${options.length} options, isChoicesInput=${isChoicesInput}`);
-                } else if (header === 'attack_types') {
+                } else if (header === 'attack_type') {
                     options = [...attackEffectsOptions]; // 创建副本避免引用问题
                     isChoicesInput = options.length > 0; // 只有当有选项时才启用
                     console.log(`Column ${header} has ${options.length} options, isChoicesInput=${isChoicesInput}`);
+                    console.log('attackEffectsOptions:', attackEffectsOptions);
                 }
 
                 if (isChoicesInput && options.length > 0) {
@@ -995,4 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tableContainer.appendChild(pagination);
         }
     }
+    
+    // 页面加载完成后自动加载配置文件
+    loadConfigAndFiles();
 });

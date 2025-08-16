@@ -75,8 +75,8 @@
 1、【表格展示】
 1-1、除了id列外，其他列自适应宽度
 2、【表格编辑】
-2-1、attack_types列支持下拉框多选和输入框，选择的范围为attack_types.csv文件中的name字段。
-2-2、attack_types列的下拉框中，除了显示name字段，还应该显示name_zh字段。
+2-1、attack_type列支持下拉框多选和输入框，选择的范围为attack_types.csv文件中的enum字段。
+2-2、attack_type列的下拉框中，除了显示enum字段，还应该显示name和name_zh字段。
 
 ### environment_effects tab
 
@@ -127,9 +127,9 @@ CSV文件格式：
 ### 示例格式
 
 ```
-id,name,name_zh,chemical_formula,attack_types,base_effect_values
-主键,名称,中文名称,化学式,攻击效果,基础效果数值
-int,String,String,String,String,String
+id,name,name_zh,chemical_formula,attack_type,damage
+主键,名称,中文名称,化学式,攻击类型,伤害
+int,String,String,String,String,int
 1,Hydrogen,氢气,H₂,Physical Attack|Repel,1|1
 2,Water,水,H₂O,Physical Attack|Slow,1|1
 ```
@@ -168,8 +168,8 @@ CSV文件格式：
 ### 示例格式
 
 ```
-id,name,name_zh,desc
-主键,名称,中文名称,描述
-int,String,String,String
-1,Physical Attack,物理攻击,对敌人造成物理伤害
+id,enum,name,name_zh,state,desc
+主键,枚举值,名称,中文名称,产物形态,描述
+int,String,String,String,String,String
+1,PROJECTILE_SINGLE,Piercing Shot,穿甲射击,Solid,发射一枚可以穿透1-2个敌人的重型投射物，对一条直线上的敌人造成高额伤害。适合打击站位集中的敌人。
 ```
