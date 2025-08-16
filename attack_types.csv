@@ -1,0 +1,8 @@
+id,name,name_zh,base_effect_values,desc
+主键,名称,中文名称,基础效果数值,描述
+int,String,String,String,String
+1,Physical Attack,物理攻击,1,对敌人造成物理伤害
+2,Chemical Attack,化学攻击,5,对敌人造成化学伤害
+3,Repel,击退,2,将敌人击退一定距离
+4,Slow,减速,1,降低敌人移动速度
+5,Heal,治疗,4,恢复友方单位生命值

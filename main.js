@@ -11,12 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPage = 1;
     const rowsPerPage = 20; // 每页显示20行
     let currentTab = 'reactions'; // 当前激活的tab
+    let isUpdatingFromEquation = false; // 防止循环触发的标志
 
     // DOM Element references
     const mainFileInput = document.getElementById('main-file-input');
     const reactantsFileInput = document.getElementById('reactants-file-input');
     const effectsFileInput = document.getElementById('effects-file-input');
-    const attackEffectsFileInput = document.getElementById('unit-effects-file-input');
+    const attackEffectsFileInput = document.getElementById('attack-types-file-input');
     const tableContainer = document.getElementById('table-container');
     const addRowButton = document.getElementById('add-row-button');
     const saveButton = document.getElementById('save-button');
@@ -79,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mainFileInput.addEventListener('change', (e) => handleFileLoad(e, 'main'));
     reactantsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'reactants'));
     effectsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'effects'));
-    attackEffectsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'unit_effects'));
+    attackEffectsFileInput.addEventListener('change', (e) => handleFileLoad(e, 'attack_types'));
     addRowButton.addEventListener('click', handleAddRow);
     saveButton.addEventListener('click', handleSaveFile);
     copyCsvButton.addEventListener('click', handleCopyCsv);
@@ -121,8 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (config.environment_effects_file) {
                 fileLoadPromises.push(loadFileFromPath(config.environment_effects_file, 'effects'));
             }
-            if (config.unit_effects_file) {
-                fileLoadPromises.push(loadFileFromPath(config.unit_effects_file, 'unit_effects'));
+            if (config.attack_types_file) {
+                fileLoadPromises.push(loadFileFromPath(config.attack_types_file, 'attack_types'));
             }
             
             // 等待所有文件加载完成
@@ -213,12 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (currentTab === 'reactions' && tableData.headers.length > 0) {
                     generateTable();
                 }
-            } else if (fileType === 'unit_effects') {
+            } else if (fileType === 'attack_types') {
                 attackEffectsData = processData(parsed);
                 const nameIndex = parsed.headers.indexOf('name');
                 const nameZhIndex = parsed.headers.indexOf('name_zh');
-                if(nameIndex === -1) throw new Error('unit_effects.csv does not contain name column.');
-                if(nameZhIndex === -1) throw new Error('unit_effects.csv does not contain name_zh column.');
+                if(nameIndex === -1) throw new Error('attack_types.csv does not contain name column.');
+                if(nameZhIndex === -1) throw new Error('attack_types.csv does not contain name_zh column.');
                 attackEffectsOptions = parsed.allRows.slice(2).map(row => {
                     const name = row[nameIndex];
                     const nameZh = row[nameZhIndex];
@@ -230,8 +231,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     return null;
                 }).filter(Boolean);
                 console.log('Attack effects options loaded:', attackEffectsOptions);
-                showNotification(`Unit effects data loaded from ${filePath}: ${attackEffectsData.allRows.length - 2} rows`);
-                if (currentTab === 'unit_effects') {
+                showNotification(`Attack types data loaded from ${filePath}: ${attackEffectsData.allRows.length - 2} rows`);
+                if (currentTab === 'attack_types') {
                     generateTable();
                 } else if (currentTab === 'reactants' && reactantsData.headers.length > 0) {
                     generateTable();
@@ -312,12 +313,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.log('Regenerating table with new environment options');
                         generateTable(); // Re-render table if main data exists
                     }
-                } else if (fileType === 'unit_effects') {
+                } else if (fileType === 'attack_types') {
                     attackEffectsData = processData(parsed);
                     const nameIndex = parsed.headers.indexOf('name');
                     const nameZhIndex = parsed.headers.indexOf('name_zh');
-                    if(nameIndex === -1) throw new Error('unit_effects.csv does not contain name column.');
-                    if(nameZhIndex === -1) throw new Error('unit_effects.csv does not contain name_zh column.');
+                    if(nameIndex === -1) throw new Error('attack_types.csv does not contain name column.');
+                    if(nameZhIndex === -1) throw new Error('attack_types.csv does not contain name_zh column.');
                     attackEffectsOptions = parsed.allRows.slice(2).map(row => {
                         const name = row[nameIndex];
                         const nameZh = row[nameZhIndex];
@@ -329,13 +330,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         return null;
                     }).filter(Boolean);
                     console.log('Attack effects options loaded:', attackEffectsOptions);
-                    showNotification(`Unit effects data loaded successfully: ${attackEffectsData.allRows.length - 2} rows`);
+                    showNotification(`Attack types data loaded successfully: ${attackEffectsData.allRows.length - 2} rows`);
                     // 实时刷新对应的tab
-                    if (currentTab === 'unit_effects') {
-                        console.log('Regenerating unit_effects table');
+                    if (currentTab === 'attack_types') {
+                        console.log('Regenerating attack_types table');
                         generateTable();
                     } else if (currentTab === 'reactants' && reactantsData.headers.length > 0) {
-                        console.log('Regenerating table with new unit effects options');
+                        console.log('Regenerating table with new attack types options');
                         generateTable(); // Re-render table if reactants data exists
                     }
                 }
@@ -511,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'reactions': '新增反应',
             'reactants': '新增反应物',
             'environment_effects': '新增环境影响',
-            'unit_effects': '新增单位效果'
+            'attack_types': '新增攻击类型'
         };
         
         if (addRowButton) {
@@ -527,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return reactantsData;
             case 'environment_effects':
                 return environmentEffectsData;
-            case 'unit_effects':
+            case 'attack_types':
                 return attackEffectsData;
             default:
                 return tableData;
@@ -724,8 +725,8 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'environment_effects':
                 table.className = 'environment-effects-table';
                 break;
-            case 'unit_effects':
-                table.className = 'unit-effects-table';
+            case 'attack_types':
+                table.className = 'attack-types-table';
                 break;
         }
         
@@ -785,7 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     options = [...environmentOptions]; // 创建副本避免引用问题
                     isChoicesInput = options.length > 0; // 只有当有选项时才启用
                     console.log(`Column ${header} has ${options.length} options, isChoicesInput=${isChoicesInput}`);
-                } else if (header === 'unit_effects') {
+                } else if (header === 'attack_types') {
                     options = [...attackEffectsOptions]; // 创建副本避免引用问题
                     isChoicesInput = options.length > 0; // 只有当有选项时才启用
                     console.log(`Column ${header} has ${options.length} options, isChoicesInput=${isChoicesInput}`);
@@ -838,7 +839,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             currentData.allRows[rowIndex][colIndex] = choices.getValue(true).join('|');
                             
                             // 规则8-6：修改reactants或products列时，实时解析并回填到reaction_equation列中（仅对reactions tab有效）
-                            if (currentTab === 'reactions') {
+                            // 如果是从方程式解析触发的更新，则跳过此逻辑以防止循环
+                            if (currentTab === 'reactions' && !isUpdatingFromEquation) {
                                 const equationIndex = currentData.headers.indexOf('reaction_equation');
                                 const reactantsIndex = currentData.headers.indexOf('reactants');
                                 const productsIndex = currentData.headers.indexOf('products');
@@ -910,13 +912,22 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const reactantsTd = row.cells[reactantsIndex];
                                     const productsTd = row.cells[productsIndex];
                                     
+                                    // 设置标志，防止循环触发
+                                    isUpdatingFromEquation = true;
+                                    
                                     // 如果是Choices实例，需要更新Choices的值
                                     if (reactantsTd.querySelector('.choices')) {
                                         const reactantsChoices = choiceInstances.find(c => 
                                             c.passedElement.element.closest('td') === reactantsTd);
                                         if (reactantsChoices) {
-                                            const values = currentData.allRows[rowIndex][reactantsIndex].split('|').filter(Boolean);
-                                            reactantsChoices.setValue(values);
+                                            const newValues = currentData.allRows[rowIndex][reactantsIndex].split('|').filter(Boolean);
+                                            const currentValues = reactantsChoices.getValue(true);
+                                            // 合并并去重
+                                            const mergedValues = [...new Set([...currentValues, ...newValues])];
+                                            reactantsChoices.removeActiveItems();
+                                            reactantsChoices.setValue(mergedValues);
+                                            // 更新数据为合并后的值
+                                            currentData.allRows[rowIndex][reactantsIndex] = mergedValues.join('|');
                                         }
                                     } else if (reactantsTd.querySelector('[contenteditable]')) {
                                         reactantsTd.querySelector('[contenteditable]').textContent = currentData.allRows[rowIndex][reactantsIndex];
@@ -926,12 +937,23 @@ document.addEventListener('DOMContentLoaded', () => {
                                         const productsChoices = choiceInstances.find(c => 
                                             c.passedElement.element.closest('td') === productsTd);
                                         if (productsChoices) {
-                                            const values = currentData.allRows[rowIndex][productsIndex].split('|').filter(Boolean);
-                                            productsChoices.setValue(values);
+                                            const newValues = currentData.allRows[rowIndex][productsIndex].split('|').filter(Boolean);
+                                            const currentValues = productsChoices.getValue(true);
+                                            // 合并并去重
+                                            const mergedValues = [...new Set([...currentValues, ...newValues])];
+                                            productsChoices.removeActiveItems();
+                                            productsChoices.setValue(mergedValues);
+                                            // 更新数据为合并后的值
+                                            currentData.allRows[rowIndex][productsIndex] = mergedValues.join('|');
                                         }
                                     } else if (productsTd.querySelector('[contenteditable]')) {
                                         productsTd.querySelector('[contenteditable]').textContent = currentData.allRows[rowIndex][productsIndex];
                                     }
+                                    
+                                    // 重置标志
+                                    setTimeout(() => {
+                                        isUpdatingFromEquation = false;
+                                    }, 0);
                                 }
                                 
                                 // 规则8-6：修改reactants或products列时，实时解析并回填到reaction_equation列中
